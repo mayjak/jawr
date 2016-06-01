@@ -16,6 +16,7 @@ package net.jawr.web.resource.bundle.generator.css.less;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,14 +26,15 @@ import com.github.sommeri.less4j.LessCompiler.CompilationResult;
 import com.github.sommeri.less4j.LessCompiler.Configuration;
 import com.github.sommeri.less4j.core.DefaultLessCompiler;
 
+import net.jawr.web.config.JawrConfig;
 import net.jawr.web.exception.BundlingProcessException;
 import net.jawr.web.exception.ResourceNotFoundException;
 import net.jawr.web.resource.bundle.IOUtils;
 import net.jawr.web.resource.bundle.JoinableResourceBundle;
-import net.jawr.web.resource.bundle.generator.AbstractCSSGenerator;
-import net.jawr.web.resource.bundle.generator.CachedGenerator;
-import net.jawr.web.resource.bundle.generator.GeneratorContext;
-import net.jawr.web.resource.bundle.generator.GeneratorRegistry;
+import net.jawr.web.resource.bundle.css.CssImageUrlRewriter;
+import net.jawr.web.resource.bundle.css.LessDebugImageUrlRewriter;
+import net.jawr.web.resource.bundle.factory.util.PathNormalizer;
+import net.jawr.web.resource.bundle.generator.*;
 import net.jawr.web.resource.bundle.generator.resolver.ResourceGeneratorResolver;
 import net.jawr.web.resource.bundle.generator.resolver.ResourceGeneratorResolverFactory;
 
@@ -144,6 +146,27 @@ public class LessCssGenerator extends AbstractCSSGenerator implements ILessCssRe
 			throw new BundlingProcessException("Unable to generate content for resource path : '" + path + "'", e);
 		}
 
+	}
+
+	protected Reader generateResourceForDebug(Reader rd, GeneratorContext context) {
+
+		// Rewrite the image URL
+		StringWriter writer = new StringWriter();
+		try {
+			IOUtils.copy(rd, writer);
+
+			JawrConfig jawrConfig = context.getConfig();
+			CssImageUrlRewriter rewriter = new LessDebugImageUrlRewriter(jawrConfig);
+			String bundlePath = PathNormalizer.joinPaths(jawrConfig.getServletMapping(), ResourceGenerator.CSS_DEBUGPATH);
+
+			StringBuffer result = rewriter.rewriteUrl(context.getPath(), bundlePath, writer.toString());
+			String content = result.toString();
+			rd = new StringReader(content);
+		} catch (IOException e) {
+			throw new BundlingProcessException(e);
+		}
+
+		return rd;
 	}
 
 }

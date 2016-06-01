@@ -39,7 +39,7 @@ import net.jawr.web.util.StringUtils;
 public class CssImageUrlRewriter {
 
 	/** The URL separator */
-	private static final String URL_SEPARATOR = "/";
+	protected static final String URL_SEPARATOR = "/";
 
 	/** The URL regexp pattern */
 	public static String URL_REGEXP = "url\\(\\s*" // 'url('
